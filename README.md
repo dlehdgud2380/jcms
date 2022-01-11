@@ -1,1 +1,1 @@
-# jupyter_management_service
+# jupyter_management_system
