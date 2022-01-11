@@ -1,2 +1,3 @@
 # jupyter_management_system
-## 사용방법
+## getting started
+## How to use
