@@ -10,7 +10,7 @@ LABEL "purpose" = "Initial Jupyter Notebook Server"
 # 3. 패키지 설치
 RUN apt update
 RUN apt install -y python3 python3-pip
-RUN pip3 install jupyter
+RUN pip3 install jupyter notebook
 
 # 4. WORKDIR 변경
 WORKDIR /root
@@ -18,6 +18,6 @@ WORKDIR /root
 # 4. 포트개방
 EXPOSE 8888
 
-# 4. 패키지 설치 후 쥬피터 노트북 실행 (실행 후 서버리스트 공유 디렉터리로 빼기)
-CMD jupyter notebook list --ip=0.0.0.0 --port:8888 --allow-root &
-CMD jupyter notebook list > /jupyter_management_storage/connection/$(hostname).txt
+# 4. 패키지 설치 후 쥬피터 노트북 실행
+CMD ["/bin/bash"]
+CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--allow-root"]
