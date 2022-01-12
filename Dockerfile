@@ -20,4 +20,4 @@ EXPOSE 8888
 
 # 4. 패키지 설치 후 쥬피터 노트북 실행 (실행 후 서버리스트 공유 디렉터리로 빼기)
 CMD jupyter notebook list --ip=0.0.0.0 --port:8888 --allow-root &
-CMD jupyter notebook list > /send_email/$(hostname).txt
+CMD jupyter notebook list > /jupyter_management_storage/connection/$(hostname).txt
