@@ -1,13 +1,14 @@
 # 쥬피터 컨테이너 관리하는 모듈 by Watson
 
 # 라이브러리 선언을 위한 import
-from os import system, chdir, getcwd, listdir
+from os import system, listdir
+import time
 import socket
 import subprocess
 import re
 
 # 타입힌트를 위한 import
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 # 경로 관련된 변수들 선언
 home_path: str = None # user 홈 폴더
@@ -42,11 +43,19 @@ work_path: str = f"{home_path}/jupyter_management_storage"
 
 
 # 컨테이너 관리하는 클래스
+# 객체 하나당 한개의 컨테이너를 관리함
 class Container:
     
-    # 자동으로 컨테이너 생성하게
-    def __init__ (self) -> None:
-
+    # 자동으로 컨테이너 생성하고 정보 저장
+    # 호스트 포트는 8888번 기본값, 지정가능
+    def __init__ (self, container_name: str, host_port: int = 8888) -> None:
+        self.container_id: str = None # 컨테이너 생성 되면서 나오는 id 저장
+        self.container_name: str = f"jupyter_{container_name}" # 컨테이너 이름
+        self.port: Dict = {
+            "hostPort" : str(host_port),
+            "conPort" : str(8888)
+        }
+        self.init() # 설정한 컨테이너 이름으로 컨테이너 만들고 자동 실행
 
     # 커스텀 도커 이미지 있는 지 체크 하는 함수
     def check_image(self) -> None:
@@ -66,82 +75,119 @@ class Container:
         self.check_image()
 
         # 생성할 컨테이너 네임 입력하기
-        container_name: str = input("새로 만들 주피터 컨테이너명 입력: jupyter_")
+        # container_name: str = input("새로 만들 주피터 컨테이너명 입력: jupyter_")
 
         # 포트설정(기본 8888)
-        host_port: int = 8888 # host
-        cont_port: int = 8888 # container
+        host_port: str = self.port["hostPort"] # host
+        cont_port: str = self.port["conPort"] # container
 
         # 사용중인 컨테이너 포트 확인 하기
         port_check: str = command("docker ps -a").split()
         while True:
             # 겹치는 포트 없으면 스탑 있으면 포트 1씩 더해보기 
-            if f":::{str(host_port)}->{cont_port}/tcp" not in port_check:
+            if f":::{host_port}->{cont_port}/tcp" not in port_check:
                 break
             # 존재하면 호스트 포트 1씩 증가시키기
             else:
                 host_port += 1
 
         # 하나의 컨테이너의 정보를 담는 디렉터리 생성하기
-        system(f"mkdir {work_path}/jupyter_{container_name}")
+        system(f"mkdir {work_path}/{self.container_name}")
             
         # 컨테이너 생성 하기
-        #print(f"docker run -d -it -p {host_port}:{cont_port} --name jupyter_{container_name} --hostname jupyter_{container_name} -v {work_path}/{container_name}:/container_info image_watson_jupyter:0.0.1")
-        system(f"docker run -d -it -p {host_port}:8888 --name jupyter_{container_name} --hostname jupyter_{container_name} -v {work_path}/{container_name}:/container_info image_watson_jupyter:0.0.1")
+        # print(f"docker run -d -it -p {host_port}:{cont_port} --name jupyter_{container_name} --hostname jupyter_{container_name} -v {work_path}/{container_name}:/container_info image_watson_jupyter:0.0.1")
+        docker_run_command: str = f"docker run -d -it -p {host_port}:{cont_port} --name {self.container_name} --hostname {self.container_name} -v {work_path}/{self.container_name}:/container_info image_watson_jupyter:0.0.1"
+        self.container_id = command(docker_run_command).strip()
+        # print(f"id: {self.container_id}")
 
     # 컨테이너 시작하는 함수
-    def start(self, container_name: str) -> None:
+    def start(self) -> None:
         # 컨테이너 시작
-        system(f"docker stop {container_name} ")
+        system(f"docker start {self.container_name} ")
 
     # 컨테이너 종료 하는 함수
-    def stop(self, container_name: str) -> None:
+    def stop(self) -> None:
         # 컨테이너 제거하기
-        system(f"docker stop {container_name} ")
+        system(f"docker stop {self.container_name} ")
 
     # 컨테이너 삭제 하는 함수
-    def remove(self, container_name: str) -> None:
+    def remove(self) -> None:
+        # 사용중일수도 있으므로 일단 멈춤
+        system(f"docker stop {self.container_name}")
+        print("(Success stopped)")
         # 하나의 컨테이너의 정보를 담는 디렉터리 제거하기
-        system(f"rm {work_path}/{container_name}")
+        system(f"rm -rf {work_path}/{self.container_name}")
+        print("(Success Deleted Directory)")
         # 컨테이너 제거하기
-        system(f"docker rm {container_name} ")
+        system(f"docker rm {self.container_name}")
+        print(f"({self.container_name} removed)")
 
-# 쥬피터 관련 된 정보 가져오는 클래스
+    # 컨테이너 정보 보여주는 함수
+    # Option = True -> tuple형태로 리턴도 하고 print도 함
+    # Option = Flase -> print로 정보만 보여줌 (기본값임)
+    def info(self, option: bool = False) -> Dict:
+
+        host_port: str = self.port["hostPort"] # host포트 가져오기
+
+        # 컨테이너 정보가 담긴 Dict
+        container_info: Dict = {
+            "conId" : self.container_id,
+            "conName" : self.container_name,
+            "port" : host_port
+        }
+
+        print(f"[Container Info]\nid: {self.container_id}\nname: {self.container_name}\nport: {host_port}")
+        if option == True : return container_info
+
+# 컨테이너 내의 쥬피터 관련 된 정보 가져오는 클래스
 class JupyterInfo:
+
+    def __init__(self, contiainer_info: Dict, ) -> None:
+
+        # 컨테이너 정보 가져오기
+        # key종류: conId, conName, port
+        self.get_info: Dict = contiainer_info
+
+        # 컨테이너 이름 저장
+        self.container_name = contiainer_info['conName']
+
+        # 커넥션 정보 dict 형태로 정의
+        self.connection_info: Dict = {
+            "conName" : self.container_name,
+            "conId" : self.get_info['conId'],
+            "address" : get_ip_address(),
+            "port" : self.get_info['port'],
+            "token" : None
+        }
 
     # log를 뽑아내는 함수
     def log(self) -> None:
         pass
 
     # Jupyter 연결에 필요한 정보를 가져와 저장하는 함수
-    def connection_info(self, container_name: str) -> None:
-
-        # 커넥션 정보 dict 형태로 정의
-        connection_info: Dict = {
-            "address" : get_ip_address(),
-            "port" : None,
-            "token" : None
-        }
+    def info(self) -> None:
 
         # 정규식 선언
-        regex_port: Any = re.compile(":[0-9]+") # 포트 정보 뽑는 정규식
+        # regex_port: Any = re.compile(":[0-9]+") # 포트 정보 뽑는 정규식
         regex_token: Any = re.compile("=[0-9a-zA-Z]+") # 토큰 정보 뽑는 정규식
 
         # port와 token 정보 가져오기
-        output: str = command(f"docker exec -it {container_name} jupyter notebook list")
+        time.sleep(3) # 쥬피터 서버 구동을 기다리기 위해 3초 딜레이 
+        output: str = command(f"docker exec -it {self.container_name} jupyter notebook list")
 
         # port와 token 정보 connection_info 에 넣기
-        connection_info["port"] = regex_port.findall(output)[0][1:]
-        connection_info["token"] = regex_token.findall(output)[0][1:]
+        # self.connection_info["port"] = regex_port.findall(output)[0][1:]
+        self.connection_info["token"] = regex_token.findall(output)[0][1:]
 
-        print(connection_info)
+        print(self.connection_info)
 
         # 파일써서 보관하기 (코드가 한줄로 길어지고 지저분 해서 따로 적었음)
-        f = open(f"{work_path}/{container_name}/connection_info.txt", 'w')
-        f.write(f"[{container_name} 접속방법]\n\n")
-        f.write(f"Address: {connection_info['address']}\n")
-        f.write(f"Port: {connection_info['port']}\n")
-        f.write(f"Token: {connection_info['token']}\n")
+        f = open(f"{work_path}/{self.container_name}/connection_info.txt", 'w')
+        f.write(f"[{self.container_name} 컨테이너 접속방법]\n\n")
+        f.write(f"Container ID: {self.connection_info['conId']}\n")
+        f.write(f"Address: {self.connection_info['address']}\n")
+        f.write(f"Port: {self.connection_info['port']}\n")
+        f.write(f"Token: {self.connection_info['token']}\n")
         f.close()
     
     # 연결에 필요한 정보를 컨테이너쪽으로 요청하여 이메일로 보낼 수 있도록 하는 함수
@@ -149,11 +195,10 @@ class JupyterInfo:
         pass
         
 
-
-
 # 테스트용
 if __name__ == "__main__" :
-    jupyter_container = Container()
-    #jupyter_info = JupyterInfo()
-    jupyter_container.init()
-    #jupyter_info.connection_info("jupyter_test1")
+    jupyter_test1 = Container("test1")
+    con_info = jupyter_test1.info(True)
+    jupyter_info = JupyterInfo(con_info)
+    jupyter_info.info()
+    #jupyter_test1.remove()
