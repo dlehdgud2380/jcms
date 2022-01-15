@@ -12,7 +12,10 @@ RUN apt update
 RUN apt install -y python3 python3-pip
 RUN pip3 install jupyter notebook
 
-# 4. WORKDIR 변경
+# 4. 공유디렉터리 생성
+RUN mkdir /container_info
+
+# 5. 작업디렉토리 지정
 WORKDIR /root
 
 # 5. 포트개방
