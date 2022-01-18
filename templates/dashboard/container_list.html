@@ -1,0 +1,9 @@
+{% if container_list %}
+    <ul>
+    {% for container in container_list %}
+        <li><a href="/dashboard/{ dashboard.id }/">{{ container }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>컨테이너 없음</p>
+{% endif %}
