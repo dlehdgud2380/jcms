@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import Dashboard
-from .models import User
+
+class DashBoardAdmin(admin.ModelAdmin):
+    search_fields = ['container_name']
 
 # Register your models here.
-admin.site.register(Dashboard)
-admin.site.register(User)
+admin.site.register(Dashboard, DashBoardAdmin)

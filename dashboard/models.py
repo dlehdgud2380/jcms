@@ -11,10 +11,8 @@ class Dashboard(models.Model):
     container_id = models.TextField()
     request_client_name = models.CharField(max_length=50)
 
-class User(models.Model):
-    """
-    유저리스트
-    """
-    name = models.TextField()
-    admin = models.BooleanField()
-    container_id = models.TextField()
+    def __str__(self) -> str:
+        """
+        id 대신 제목을 표시 해주는 기능
+        """
+        return self.container_name
