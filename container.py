@@ -69,8 +69,8 @@ class Container:
         self.container_id: str = None  # 컨테이너 생성 되면서 나오는 id 저장
         self.container_name: str = f"jupyter_{container_name}"  # 컨테이너 이름
         self.port: Dict = {
-            "hostPort": str(host_port),
-            "conPort": str(8888)
+            "hostPort": host_port,
+            "conPort": 8888
         }
         self.init()  # 설정한 컨테이너 이름으로 컨테이너 만들고 자동 실행
 
@@ -92,15 +92,15 @@ class Container:
         self.__check_image()  # 이미지 있는 지 체크
 
         # 포트설정(기본 8888)
-        host_port: str = self.port["hostPort"]  # host
-        cont_port: str = self.port["conPort"]  # container
+        host_port: int = self.port["hostPort"]  # host
+        cont_port: int = self.port["conPort"]  # container
 
         # 사용중인 컨테이너 포트 확인 하기
         port_check: str = command("docker ps -a").split()
         while True:
 
             # 겹치는 포트 없으면 스탑 있으면 포트 1씩 더해보기
-            if f":::{host_port}->{cont_port}/tcp" not in port_check:
+            if f":::{str(host_port)}->{str(cont_port)}/tcp" not in port_check:
                 break
 
             # 존재하면 호스트 포트 1씩 증가시키기
@@ -111,7 +111,7 @@ class Container:
 
         # 컨테이너 생성 하기
         docker_run_command: str = f"docker run -d -it " \
-            f"-p {host_port}:{cont_port} " \
+            f"-p {str(host_port)}:{str(cont_port)} " \
             f"--name {self.container_name} " \
             f"--hostname {self.container_name} " \
             f"-v {work_path}/{self.container_name}:/container_info image_watson_jupyter:0.0.1"
@@ -242,6 +242,8 @@ def send_mail(container_name) -> None:
     command: str = f"docker exec -it {mail_container} " \
         f"su root -c " \
         f"'echo {container_name} | /bin/bash ./sendmail.sh'"
+    
+    print(command)
     system(command)  # 해당 컨테이너에 대한 메일 전송
 
 
