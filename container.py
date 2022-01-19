@@ -31,7 +31,7 @@ def command(command: str) -> str:
     """
     output값이 필요한 shell command 함수
     """
-    output: IO[bytes] = subprocess.Popen(
+    output: bytes = subprocess.Popen(
         f"{command}", shell=True, stdout=subprocess.PIPE).stdout
     result: bytes = output.read()
     return result.decode()
@@ -46,10 +46,10 @@ home_path = command("echo $HOME").strip()
 # 컨테이너 정보 담는 공유 디렉토리 만들기(코드가 길어져서 3줄로 표현하였음)
 check_dir: List = listdir(home_path)  # 홈 디렉터리 가져오기
 if "jupyter_management_storage" not in check_dir:  # 공유 디렉터리 없으면 만들고
-    print("Not Ready: 공유 디렉터리 존재 하지 않음 -> 공유 디렉터리 생성")
+    print("Not Ready: Share directory no exist. -> mkdir share dirctory")
     system(f"mkdir {home_path}/jupyter_management_storage")
 else:  # 있으면 패쓰~
-    print("OK: 경로에 공유 디렉터리가 존재합니다.")
+    print("OK: Share directory exist. Ready to use module")
 
 # 컨테이너 정보 담는 디렉토리 경로 가져오기
 work_path: str = f"{home_path}/jupyter_management_storage"
@@ -346,8 +346,8 @@ if __name__ == "__main__":
     #jupyter_info.info()
     print("\n\n------------print connection_info.txt------------")
     system(f"cat {work_path}/{con_info['conName']}/connection_info.txt")
-    print("\n\n------------print connection_info.txt------------")
-    print(f"container status: {jupyter_test1.health()}")
+    print("\n\n------------print container health------------")
+    print(f"container health: {jupyter_test1.health()}")
     #print("\n\n------------send mail connection info------------")
     #send_mail("jupyter_test1")
     # print("\n\n------------logging------------")
