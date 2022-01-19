@@ -37,8 +37,14 @@ def command(command: str) -> str:
     return result.decode()
 
 # 이메일 컨테이너 확인하는 함수
-# def check
+def check_email_container() -> None:
+    pass
 
+# 도커가 사용가능한지 확인하는 함수
+def check_docker_status() -> None:
+    pass
+
+print("[Module Environment Checking]")
 
 # user 홈 폴더 경로 가져오기
 home_path = command("echo $HOME").strip()
@@ -46,10 +52,10 @@ home_path = command("echo $HOME").strip()
 # 컨테이너 정보 담는 공유 디렉토리 만들기(코드가 길어져서 3줄로 표현하였음)
 check_dir: List = listdir(home_path)  # 홈 디렉터리 가져오기
 if "jupyter_management_storage" not in check_dir:  # 공유 디렉터리 없으면 만들고
-    print("Not Ready: Share directory no exist. -> mkdir share dirctory")
+    print("Share directory check: None -> mkdir share dirctory\n")
     system(f"mkdir {home_path}/jupyter_management_storage")
 else:  # 있으면 패쓰~
-    print("OK: Share directory exist. Ready to use module")
+    print("Share directory check: OK\n")
 
 # 컨테이너 정보 담는 디렉토리 경로 가져오기
 work_path: str = f"{home_path}/jupyter_management_storage"
