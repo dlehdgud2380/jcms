@@ -1,28 +1,39 @@
 {% load static %}
 <link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
-<div class="container my-3">
-    <table class="table">
-        <thead>
-        <tr class="thead-dark">
-            <th>컨테이너명</th>
-            <th>컨테이너ID</th>
-            <th>컨테이너 생성 요청자</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% if container_list %}
-        {% for container in container_list %}
-        <tr>
-            <td><a href="{% url 'dashboard:detail' container.ctnId %}">{{ container }}</a></td>
-            <td>{{ container.ctnId }}</td>
-            <td>{{ container.clientName }}</td>
-        </tr>
-        {% endfor %}
-        {% else %}
-        <tr>
-            <td colspan="3">컨테이너 없음</td>
-        </tr>
-        {% endif %}
-        </tbody>
-    </table>
-</div>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <title>Container List</title>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <h1 style="text-align: center;">Jupyter Container Management System</h1>
+    <div class="container my-3">
+        <table class="table">
+            <thead>
+            <tr class="thead-dark">
+                <th>컨테이너명</th>
+                <th>컨테이너ID</th>
+                <th>컨테이너 생성 요청자</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% if container_list %}
+            {% for container in container_list %}
+            <tr>
+                <td><a href="{% url 'dashboard:detail' container.ctnId %}">{{ container }}</a></td>
+                <td>{{ container.ctnId }}</td>
+                <td>{{ container.clientName }}</td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="3">컨테이너 없음</td>
+            </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

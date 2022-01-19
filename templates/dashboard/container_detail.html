@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <title>Dashboard</title>
+    <title>JCMS Dashboard</title>
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -14,110 +14,82 @@
     body {
         font-family: Arial, Helvetica, sans-serif;
     }
-    
-    /* Create two columns/boxes that floats next to each other */
-    .sidebar {
-        float: left;
-        width: 15%;
-        height: 300px; /* only for demonstration, should be removed */
-        background: #ccc;
-        padding: 20px;
-    }
-    
-    /* Style the list inside the menu */
-    .sidebar ul {
-        list-style-type: none;
-        padding: 0;
-    }
-    
-    article {
-        float: left;
-        padding: 20px;
-        width: 70%;
-        background-color: #f1f1f1;
-        height: 300px; /* only for demonstration, should be removed */
-    }
-    
-    /* Clear floats after the columns */
-    section::after {
-        content: "";
-        display: table;
-        clear: both;
-    }
-    
-    /* Style the footer */
-    footer {
-        background-color: #777;
-        padding: 10px;
-        text-align: center;
-        color: white;
-    }
-    
-    /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
-    @media (max-width: 600px) {
-        nav, article {
-        width: 100%;
-        height: auto;
-        }
-    }
+
 </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Dashboard</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-secondary active">
-              <input type="radio" name="options" id="option1" autocomplete="off" checked> 시작
-            </label>
-            <label class="btn btn-secondary">
-              <input type="radio" name="options" id="option2" autocomplete="off"> 정지
-            </label>
-          </div>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <button type="button" class="btn btn-outline-danger">제거</button>
-            <button type="button" class="btn btn-outline-info">새로고침</button>
-            <button type="button" class="btn btn-outline-primary">컨테이너추가</button>
+        <a class="navbar-brand" href="{% url 'dashboard:list'%}">JCMS Dashboard</a>
+        <ul class="nav justify-content-end">
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="modal" data-target="#ctnMakeModal" href="#ctnMakeModal">생성</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">제거</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">새로고침</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">이메일 보내기</a>
+            </li>
+        </ul>
+    </nav>
+
+    <p></p>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-3">
+                <h4>container list</h4>
+                {% if container_list %}
+                <ul class="list-group list-group-flush">
+                    {% for container in container_list %}
+                    <li class="list-group-item"><a href="{% url 'dashboard:detail' container.ctnId %}">{{ container }}</a></li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <ul class="list-group list-group-flush">
+                    컨테이너 없음
+                </ul>
+                {% endif %}
+            </div>
+
+            <div class="col-sm-9">
+                <div class="d-flex justify-content-end btn-group btn-group-toggle" data-toggle="buttons">
+                    <label class="btn btn-secondary active ">
+                        <input type="radio" name="options" id="option1" checked> Container Start
+                      </label>
+                      <label class="btn btn-secondary">
+                        <input type="radio" name="options" id="option2"> Container Stop
+                      </label>
+                </div>
+                <p></p>
+                <div class="card shadow-sm" style="width: 100%;">
+                    <div class="card-body">
+                    <h2 class="card-title">{{ container.name }}</h2>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ container.ctnId }}</h6>
+                    <div></div>
+                    상태: {{ container.health }}
+                    <div></div>
+                    포트: {{ container.port }}
+                    <div></div>
+                    IP: {{ container.ip }}
+                    <div></div>
+                    Juptyer토큰: {{ container.jupyterToken }}
+                    <div></div>
+                    컨테이너 생성 요청자: {{ container.clientName }}
+                </div>
+
+            </div>
+
+            <p></p>
+
+            <div class="card shadow-sm" style="width: 100%;">
+                <div class="card-body">
+                <h3 class="card-title">container log</h3>
+                <textarea rows="3" class="form-control bg-light" readonly>log print area</textarea>
+            </div>
         </div>
-      </nav>
-    
-<section>
-<nav class="sidebar">
-    <h3>Container List</h3>
-    {% if container_list %}
-    <ul>
-        {% for container in container_list %}
-        <li><a href="{% url 'dashboard:detail' container.ctnId %}">{{ container }}</a></li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <ul>
-        컨테이너 없음
-    </ul>
-    {% endif %}
-</nav>
-
-<article>
-    <div>
-        컨테이너ID: {{ container.ctnId }}
-        <div></div>
-        상태: {{ container.health }}
-        <div></div>
-        포트: {{ container.port }}
-        <div></div>
-        IP: {{ container.ip }}
-        <div></div>
-        Juptyer토큰: {{ container.jupyterToken }}
-        <div></div>
-        컨테이너 생성 요청자: {{ container.clientName }}
-    </div>
-</article>
-</section>
-
-<footer>
-<p>Footer</p>
-</footer>
-</body>
+    </body>
 </html>
