@@ -1,9 +1,28 @@
-{% if container_list %}
-    <ul>
-    {% for container in container_list %}
-        <li><a href="/dashboard/{ dashboard.id }/">{{ container }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>컨테이너 없음</p>
-{% endif %}
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
+<div class="container my-3">
+    <table class="table">
+        <thead>
+        <tr class="thead-dark">
+            <th>컨테이너명</th>
+            <th>컨테이너ID</th>
+            <th>컨테이너 생성 요청자</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if container_list %}
+        {% for container in container_list %}
+        <tr>
+            <td><a href="{% url 'dashboard:detail' container.ctnId %}">{{ container }}</a></td>
+            <td>{{ container.ctnId }}</td>
+            <td>{{ container.clientName }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="3">컨테이너 없음</td>
+        </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
