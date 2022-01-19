@@ -1,8 +1,6 @@
 # 쥬피터 컨테이너 관리하는 모듈 by Watson
 
 # 라이브러리 선언을 위한 import
-from dis import dis
-import io
 from os import system, listdir
 import time
 import socket
@@ -10,6 +8,7 @@ import subprocess
 import re
 import threading
 import datetime
+import json
 
 # 타입힌트를 위한 import
 from typing import Any, Dict, List
@@ -38,8 +37,6 @@ def command(command: str) -> str:
     return result.decode()
 
 # 이메일 컨테이너 확인하는 함수
-
-
 # def check
 
 
@@ -60,21 +57,55 @@ work_path: str = f"{home_path}/jupyter_management_storage"
 
 class Container:
     """
-    컨테이너 관리하는 클래스
+    컨테이너 한개를 객체로 관리하는 클래스
+    * 컨테이너 없는 경우 컨테이너 생성
+    * 똑같은 이름의 컨테이너가 존재하는 경우 정보 로딩
     """
 
     # 자동으로 컨테이너 생성하고 정보 저장
     # 호스트 포트는 8888번 기본값, 지정가능
-    def __init__(self, container_name: str, host_port: int = 8888) -> None:
-        self.container_id: str = None  # 컨테이너 생성 되면서 나오는 id 저장
-        self.container_name: str = f"jupyter_{container_name}"  # 컨테이너 이름
-        self.port: Dict = {
-            "hostPort": host_port,
-            "conPort": 8888
+    def __init__(self, container_name: str) -> None:
+        self.container_id: str = None  # 컨테이너 id
+        self.container_name: str = None  # 컨테이너 이름
+        self.port: Dict = {  # 컨테이너 포트
+            "hostPort": None,
+            "conPort": None
         }
-        self.init()  # 설정한 컨테이너 이름으로 컨테이너 만들고 자동 실행
+
+        # 해당이름의 컨테이너가 이미 생성되어있는 지 확인
+        self.container_name = f'jupyter_{container_name}'
+        check: str = command(
+            f'docker ps -a -f "name={self.container_name}"').split()
+
+        # 설정한 컨테이너 이름으로 컨테이너 만들고 자동 실행
+        if self.container_name not in check:
+            print(f'error: {self.container_name} not found\n')
+            print(f'info: Container makeing\n')
+            self.container_name = f"jupyter_{container_name}"  # 컨테이너 이름 설정
+
+            # 컨테이너 포트 설정
+            self.port['hostPort'] = 8888
+            self.port['conPort'] = 8888
+
+            # 컨테이너 생성
+            self.init()
+
+        # 컨테이너가 있다면 정보 가져오기
+        else:
+            print(f'info: {self.container_name} found\n')
+            # 정보불러오기
+            path: str = f"{work_path}/{self.container_name}"
+            json_file = open(f'{path}/container_info.json', 'r')
+            data: Dict = dict(json.loads(json_file.read()))
+
+            # 컨테이너 정보 쓰기
+            self.container_id = data['id']
+            self.container_name = data['name']
+            self.port['hostPort'] = data['hostPort']
+            self.port['conPort'] = data['conPort']
 
     # 커스텀 도커 이미지 있는 지 체크 하는 함수(Private)
+
     def __check_image(self) -> None:
         check: str = command("docker images")  # 이미지 존재하는 지 확인
 
@@ -90,6 +121,14 @@ class Container:
         컨테이너 생성할때 사용하는 함수
         """
         self.__check_image()  # 이미지 있는 지 체크
+
+        # json파일 뺄때 쓰는 dict
+        cnt_data: Dict = {
+            "name": None,
+            "id": None,
+            "hostPort": None,
+            "conPort": None
+        }
 
         # 포트설정(기본 8888)
         host_port: int = self.port["hostPort"]  # host
@@ -116,23 +155,30 @@ class Container:
             f"--hostname {self.container_name} " \
             f"-v {work_path}/{self.container_name}:/container_info image_watson_jupyter:0.0.1"
 
+        # 컨테이너 ID 가져와서 저장하기
         self.container_id = command(docker_run_command).strip()
         # print(f"id: {self.container_id}")
+
+        # 컨테이너 정보 json파일로 저장하기
+        cnt_data['name'] = self.container_name
+        cnt_data['id'] = self.container_id
+        cnt_data['hostPort'] = host_port
+        cnt_data['conPort'] = cont_port
+
+        # 컨테이너 정보 export
+        with open(f"{work_path}/{self.container_name}/container_info.json", "w") as json_file:
+            json.dump(cnt_data, json_file)
 
     def start(self) -> None:
         """
         컨테이너 시작하는 함수
         """
-
-        # 컨테이너 시작
         system(f"docker start {self.container_name} ")
 
     def stop(self) -> None:
         """
         컨테이너 정지 하는 함수
         """
-
-        # 컨테이너 정지
         system(f"docker stop {self.container_name} ")
 
     def remove(self) -> None:
@@ -170,6 +216,23 @@ class Container:
             f"[Container Info]\nid: {self.container_id}\nname: {self.container_name}\nport: {host_port}")
         if option is True:
             return container_info
+
+    def health(self) -> bool:
+        """
+        ## 컨테이너 상태 확인하는 클래스
+        * 컨테이너 구동중인지 확인
+        """
+
+        # 명령어 실행해서 확인
+        check: str = command(
+            f'docker ps -a -f "name={self.container_name}" -f "status=running"').split()
+
+        # 해당 컨테이너가 살아있는 지 확인
+        # 살아있으면 True 리턴 죽었으면 False
+        if self.container_name not in check:
+            return False
+        else:
+            return True
 
 
 class JupyterInfo:
@@ -242,7 +305,7 @@ def send_mail(container_name) -> None:
     command: str = f"docker exec -it {mail_container} " \
         f"su root -c " \
         f"'echo {container_name} | /bin/bash ./sendmail.sh'"
-    
+
     print(command)
     system(command)  # 해당 컨테이너에 대한 메일 전송
 
@@ -278,13 +341,15 @@ if __name__ == "__main__":
     print("------------container make && print info------------")
     jupyter_test1 = Container("test1")
     con_info = jupyter_test1.info(True)
-    print("\n\n------------jupyter info------------")
-    jupyter_info = JupyterInfo(con_info)
-    jupyter_info.info()
+    #print("\n\n------------jupyter info------------")
+    #jupyter_info = JupyterInfo(con_info)
+    #jupyter_info.info()
     print("\n\n------------print connection_info.txt------------")
     system(f"cat {work_path}/{con_info['conName']}/connection_info.txt")
-    print("\n\n------------send mail connection info------------")
-    send_mail("jupyter_test1")
+    print("\n\n------------print connection_info.txt------------")
+    print(f"container status: {jupyter_test1.health()}")
+    #print("\n\n------------send mail connection info------------")
+    #send_mail("jupyter_test1")
     # print("\n\n------------logging------------")
     # logger = Logger("test1")
     # logger.daemon = True
