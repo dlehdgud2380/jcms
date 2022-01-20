@@ -1,95 +1,155 @@
 {% load static %}
-<link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}">
+<script type="text/javascript" src="{% static 'javascript/jquery-3.6.0.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/bootstrap.min.js' %}"></script>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <title>JCMS Dashboard</title>
-    <meta charset="utf-8">
+<title>JCMS Dashboard</title>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
     * {
         box-sizing: border-box;
     }
-    
     body {
         font-family: Arial, Helvetica, sans-serif;
     }
-
 </style>
+<script>
+    
+</script>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="{% url 'dashboard:list'%}">JCMS Dashboard</a>
-        <ul class="nav justify-content-end">
-            <li class="nav-item">
-              <a class="nav-link" data-toggle="modal" data-target="#ctnMakeModal" href="#ctnMakeModal">생성</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">제거</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">새로고침</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">이메일 보내기</a>
-            </li>
-        </ul>
-    </nav>
-
-    <p></p>
-
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-sm-3">
-                <h4>container list</h4>
-                {% if container_list %}
-                <ul class="list-group list-group-flush">
-                    {% for container in container_list %}
-                    <li class="list-group-item"><a href="{% url 'dashboard:detail' container.ctnId %}">{{ container }}</a></li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <ul class="list-group list-group-flush">
-                    컨테이너 없음
-                </ul>
-                {% endif %}
-            </div>
-
-            <div class="col-sm-9">
-                <div class="d-flex justify-content-end btn-group btn-group-toggle" data-toggle="buttons">
-                    <label class="btn btn-secondary active ">
-                        <input type="radio" name="options" id="option1" checked> Container Start
-                      </label>
-                      <label class="btn btn-secondary">
-                        <input type="radio" name="options" id="option2"> Container Stop
-                      </label>
-                </div>
-                <p></p>
-                <div class="card shadow-sm" style="width: 100%;">
-                    <div class="card-body">
-                    <h2 class="card-title">{{ container.name }}</h2>
-                    <h6 class="card-subtitle mb-2 text-muted">{{ container.ctnId }}</h6>
-                    <div></div>
-                    상태: {{ container.health }}
-                    <div></div>
-                    포트: {{ container.port }}
-                    <div></div>
-                    IP: {{ container.ip }}
-                    <div></div>
-                    Juptyer토큰: {{ container.jupyterToken }}
-                    <div></div>
-                    컨테이너 생성 요청자: {{ container.clientName }}
-                </div>
-
-            </div>
-
-            <p></p>
-
-            <div class="card shadow-sm" style="width: 100%;">
-                <div class="card-body">
-                <h3 class="card-title">container log</h3>
-                <textarea rows="3" class="form-control bg-light" readonly>log print area</textarea>
-            </div>
-        </div>
-    </body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<a class="navbar-brand" href="{% url 'dashboard:list'%}">JCMS Dashboard</a>
+<ul class="nav justify-content-end">
+	<li class="nav-item">
+	<a class="nav-link" data-toggle="modal" data-target="#ctnMakeModal" href="#">생성</a>
+	</li>
+	<li class="nav-item">
+	<a class="nav-link" data-toggle="modal" data-target="#ctnRemoveModal" href="#">제거</a>
+	</li>
+	<li class="nav-item">
+	<a class="nav-link" href="#" onclick="window.location.reload()">새로고침</a>
+	</li>
+	<li class="nav-item">
+	<a class="nav-link" href="#">이메일 보내기</a>
+	</li>
+</ul>
+</nav>
+<!-- Modal -->
+<div class="modal fade" id="ctnMakeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">컨테이너 생성</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<form method="post" class="post-form">
+                    {% csrf_token %}
+					<div class="form-group" >
+						<label for="containerNameField">컨테이너명</label>
+						<input type="text" class="form-control" id="containerName" name="containerName"
+                            value="{{ form.containerName.value|default_if_none:'' }}" placeholder="컨테이너명 입력">
+					</div>
+					<div class="form-group">
+						<label for="containerNameField">컨테이너 포트</label>
+						<input type="text" class="form-control" id="containerPort" name="containerPort"
+                            value="{{ form.containerPort.value|default_if_none:'' }}" placeholder="컨테이너 포트 입력">
+					</div>
+					<div class="form-group">
+						<label for="containerNameField">컨테이너 생성 요청자</label>
+						<input type="text" class="form-control" id="clientName" name="clientName"
+                            value="{{ form.clientName.value|default_if_none:'' }}" placeholder="생성 요청자 입력">
+					</div>
+					<div> 
+						<button type="submit" class="btn btn-primary">생성하기</button>
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="ctnRemoveModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">컨테이너 제거</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p>
+					현재 보이는 컨테이너를 제거 합니다.
+				</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-danger">제거</button>
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+			</div>
+		</div>
+	</div>
+</div>
+<p>
+</p>
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-sm-3">
+			<h4>container list</h4>
+			 {% if container_list %}
+			<ul class="list-group list-group-flush">
+				 {% for container in container_list %}
+				<li class="list-group-item"><a href="{% url 'dashboard:detail' container.ctnId %}">{{ container }}</a></li>
+				 {% endfor %}
+			</ul>
+			 {% else %}
+			<ul class="list-group list-group-flush">
+				 컨테이너 없음
+			</ul>
+			 {% endif %}
+		</div>
+		<div class="col-sm-9">
+			<div class="d-flex justify-content-end btn-group btn-group-toggle" data-toggle="buttons">
+				<label class="btn btn-secondary active ">
+				<input type="radio" name="options" id="option1" checked> Container Start </label>
+				<label class="btn btn-secondary">
+				<input type="radio" name="options" id="option2"> Container Stop </label>
+			</div>
+			<p></p>
+			<div class="card shadow-sm" style="width: 100%;">
+				<div class="card-body">
+					<h2 class="card-title ">{{ container.name }}</h2>
+					<h6 class="card-subtitle mb-2 text-muted">{{ container.ctnId }}</h6>
+					<div>
+					</div>
+					 상태: {{ container.health }}
+					<div>
+					</div>
+					 포트: {{ container.port }}
+					<div>
+					</div>
+					 IP: {{ container.ip }}
+					<div>
+					</div>
+					 Juptyer토큰: {{ container.jupyterToken }}
+					<div>
+					</div>
+					 컨테이너 생성 요청자: {{ container.clientName }}
+				</div>
+			</div>
+			<p>
+			</p>
+			<div class="card shadow-sm" style="width: 100%;">
+				<div class="card-body">
+					<h3 class="card-title">container log</h3>
+					<textarea rows="3" class="form-control bg-light" readonly>log area</textarea>
+				</div>
+		    </div>
+	</body>
 </html>
