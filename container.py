@@ -70,16 +70,13 @@ class Container:
 
     # 자동으로 컨테이너 생성하고 정보 저장
     # 호스트 포트는 8888번 기본값, 지정가능
-    def __init__(self, container_name: str) -> None:
+    def __init__(self, container_name: str, port: str = 8888) -> None:
         self.container_id: str = None  # 컨테이너 id
         self.container_name: str = None  # 컨테이너 이름
-        self.port: Dict = {  # 컨테이너 포트
-            "hostPort": None,
-            "conPort": None
-        }
-
+        self.host_port: int = None 
+        self.con_port: int = None
         # 해당이름의 컨테이너가 이미 생성되어있는 지 확인
-        self.container_name = f'jupyter_{container_name}'
+        self.container_name = f'{container_name}'
         check: str = command(
             f'docker ps -a -f "name={self.container_name}"').split()
 
@@ -89,9 +86,9 @@ class Container:
             print(f'info: Container makeing\n')
             self.container_name = f"jupyter_{container_name}"  # 컨테이너 이름 설정
 
-            # 컨테이너 포트 설정
-            self.port['hostPort'] = 8888
-            self.port['conPort'] = 8888
+            # 포트설정(기본 8888)
+            self.host_port = int(port) # host
+            self.con_port = 8888 # container
 
             # 컨테이너 생성
             self.init()
@@ -107,8 +104,8 @@ class Container:
             # 컨테이너 정보 쓰기
             self.container_id = data['id']
             self.container_name = data['name']
-            self.port['hostPort'] = data['hostPort']
-            self.port['conPort'] = data['conPort']
+            self.host_port = data['hostPort']
+            self.con_port = data['conPort']
 
     # 커스텀 도커 이미지 있는 지 체크 하는 함수(Private)
 
@@ -136,27 +133,23 @@ class Container:
             "conPort": None
         }
 
-        # 포트설정(기본 8888)
-        host_port: int = self.port["hostPort"]  # host
-        cont_port: int = self.port["conPort"]  # container
-
         # 사용중인 컨테이너 포트 확인 하기
         port_check: str = command("docker ps -a").split()
         while True:
 
-            # 겹치는 포트 없으면 스탑 있으면 포트 1씩 더해보기
-            if f":::{str(host_port)}->{str(cont_port)}/tcp" not in port_check:
-                break
+            # 겹치는 포트 있으면 1씩 추가
+            if f":::{self.host_port}->{self.con_port}/tcp" in port_check:
+                self.host_port += 1
 
-            # 존재하면 호스트 포트 1씩 증가시키기
+            # 없으면 루프 파ㅋ괴ㅋ
             else:
-                host_port += 1
+                break
         # 하나의 컨테이너의 정보를 담는 디렉터리 생성하기
         system(f"mkdir {work_path}/{self.container_name}")
 
         # 컨테이너 생성 하기
         docker_run_command: str = f"docker run -d -it " \
-            f"-p {str(host_port)}:{str(cont_port)} " \
+            f"-p {str(self.host_port)}:{str(self.con_port)} " \
             f"--name {self.container_name} " \
             f"--hostname {self.container_name} " \
             f"-v {work_path}/{self.container_name}:/container_info image_watson_jupyter:0.0.1"
@@ -168,8 +161,8 @@ class Container:
         # 컨테이너 정보 json파일로 저장하기
         cnt_data['name'] = self.container_name
         cnt_data['id'] = self.container_id
-        cnt_data['hostPort'] = host_port
-        cnt_data['conPort'] = cont_port
+        cnt_data['hostPort'] = self.host_port
+        cnt_data['conPort'] = self.con_port
 
         # 컨테이너 정보 export
         with open(f"{work_path}/{self.container_name}/container_info.json", "w") as json_file:
@@ -197,7 +190,7 @@ class Container:
         print("(Success stopped)")
 
         # 하나의 컨테이너의 정보를 담는 디렉터리 제거하기
-        system(f"rm -rf {work_path}/{self.container_name}")
+        system(f"rm -r {work_path}/{self.container_name}")
         print("(Success Deleted Directory)")
 
         # 컨테이너 제거하기
@@ -207,15 +200,16 @@ class Container:
     def info(self, option: bool = False) -> Dict:
         """
         ## 컨테이너 정보 보여주는 함수
-        * Option = True -> tuple형태로 리턴도 하고 print도 함
-        * Option = Flase -> print로 정보만 보여줌 (기본값임)
+        * Option = True -> Dict형태로 리턴도 하고 print도 함
+        * Option = False -> print로 정보만 보여줌 (기본값임)
         """
-        host_port: str = self.port["hostPort"]  # host포트 가져오기
+        host_port: str = self.host_port  # host포트 가져오기
 
         # 컨테이너 정보가 담긴 Dict
         container_info: Dict = {
             "conId": self.container_id,
             "conName": self.container_name,
+            "conIp": get_ip_address(),
             "port": host_port
         }
         print(
@@ -264,9 +258,9 @@ class JupyterInfo:
             "token": None
         }
 
-    def info(self) -> None:
+    def info(self) -> Dict:
         """
-        Jupyter 연결에 필요한 정보를 가져와 저장하는 함수
+        Jupyter 연결에 필요한 정보를 가져오는 함수
         """
 
         # 정규식 선언
@@ -283,6 +277,14 @@ class JupyterInfo:
         self.connection_info["token"] = regex_token.findall(output)[0][1:]
 
         print(self.connection_info)
+
+        return self.connection_info
+
+
+    def save_info(self) -> None:
+        """
+        Jupyter 연결에 필요한 정보를 txt파일로 저장하는 함수
+        """
 
         # 파일써서 보관하기 (코드가 한줄로 길어지고 지저분 해서 따로 적었음)
         f = open(f"{work_path}/{self.container_name}/connection_info.txt", 'w')
