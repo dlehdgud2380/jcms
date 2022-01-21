@@ -16,9 +16,6 @@
         font-family: Arial, Helvetica, sans-serif;
     }
 </style>
-<script>
-    
-</script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -49,7 +46,7 @@
 				</button>
 			</div>
 			<div class="modal-body">
-				<form method="post" class="post-form">
+				<form method="post" class="post-form" action="/dashboard/make/">
                     {% csrf_token %}
 					<div class="form-group" >
 						<label for="containerNameField">컨테이너명</label>
@@ -90,8 +87,11 @@
 				</p>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-danger">제거</button>
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+				<form method="post" class="post-form" action="/dashboard/remove/">
+					<input type="text" class="form-control" style="display: none" name="containerId" value="{{ container.ctnId }}">
+					<button type="submit" class="btn btn-danger">제거</button>
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+				</form>
 			</div>
 		</div>
 	</div>
@@ -101,7 +101,7 @@
 <div class="container-fluid">
 	<div class="row">
 		<div class="col-sm-3">
-			<h4>container list</h4>
+			<h5>컨테이너 리스트</h5>
 			 {% if container_list %}
 			<ul class="list-group list-group-flush">
 				 {% for container in container_list %}
@@ -115,11 +115,13 @@
 			 {% endif %}
 		</div>
 		<div class="col-sm-9">
-			<div class="d-flex justify-content-end btn-group btn-group-toggle" data-toggle="buttons">
-				<label class="btn btn-secondary active ">
-				<input type="radio" name="options" id="option1" checked> Container Start </label>
-				<label class="btn btn-secondary">
-				<input type="radio" name="options" id="option2"> Container Stop </label>
+			<div class="d-flex justify-content-between" data-toggle="buttons">
+				<h2>컨테이너 상태</h2>
+				<form method="post" class="post-form" action="/dashboard/remove/">
+					<input type="text" class="form-control" style="display: none" name="containerId" value="{{ container.ctnId }}">
+					<button type="submit" class="btn btn-primary">시작</button>
+					<button type="submit" class="btn btn-danger">정지</button>
+				</form>
 			</div>
 			<p></p>
 			<div class="card shadow-sm" style="width: 100%;">
