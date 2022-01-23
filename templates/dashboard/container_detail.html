@@ -2,6 +2,7 @@
 <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}">
 <script type="text/javascript" src="{% static 'javascript/jquery-3.6.0.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'javascript/bootstrap.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/axios.min.js' %}"></script>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -15,7 +16,38 @@
     body {
         font-family: Arial, Helvetica, sans-serif;
     }
+
+	#log-area {
+		height: 20em;
+	}
 </style>
+<script type="text/javascript">
+	function getLog(){
+		axios({
+			method:"GET",
+			url: '{% url 'dashboard:log' %}?ctnName={{ container.name }}',
+		}).then((res)=>{
+			document.getElementById("log-area").value = res.data.log
+		}).catch(error=>{
+			document.getElementById("log-area").value = "Log load failed"
+			throw new Error(error);
+		});
+	}
+	{% if container.health == True %}
+	// 컨테이너가 살아있을때 5초 간격으로 log 호출
+		$(document).ready(
+			function() {
+				getLog()
+				setInterval(getLog, 5000)
+			}
+		)
+	{% else %}
+	// 컨테이너가 죽었다면 한번만 호출하고 종료
+		$(document).ready(
+			getLog()
+		)
+	{% endif %}
+</script>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -185,7 +217,8 @@
 			<div class="card shadow-sm" style="width: 100%;">
 				<div class="card-body">
 					<h3 class="card-title">container log</h3>
-					<textarea rows="3" class="form-control bg-light" readonly>log area</textarea>
+					<textarea rows="3" class="form-control bg-light" id="log-area" readonly>log area</textarea>
+					<a onclick='document.getElementById("log-area").scrollTop = document.getElementById("log-area").scrollHeight;' href="#">맨 아래로</a>
 				</div>
 		    </div>
 	</body>
