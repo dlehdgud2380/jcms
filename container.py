@@ -187,17 +187,17 @@ class Container:
 
         # 사용중일수도 있으므로 일단 멈춤
         system(f"docker stop {self.container_name}")
-        print("(Success stopped)")
+        print("(Success stopped)\n")
 
         # 하나의 컨테이너의 정보를 담는 디렉터리 제거하기
         system(f"rm -r {work_path}/{self.container_name}")
-        print("(Success Deleted Directory)")
+        print("(Success Deleted Directory)\n")
 
         # 컨테이너 제거하기
         system(f"docker rm {self.container_name}")
-        print(f"({self.container_name} removed)")
+        print(f"({self.container_name} removed)'\n")
 
-    def info(self, option: bool = False) -> Dict:
+    def info(self) -> Dict:
         """
         ## 컨테이너 정보 보여주는 함수
         * Option = True -> Dict형태로 리턴도 하고 print도 함
@@ -214,8 +214,7 @@ class Container:
         }
         print(
             f"[Container Info]\nid: {self.container_id}\nname: {self.container_name}\nport: {host_port}")
-        if option is True:
-            return container_info
+        return container_info
 
     def health(self) -> bool:
         """
@@ -277,7 +276,6 @@ class JupyterInfo:
         self.connection_info["token"] = regex_token.findall(output)[0][1:]
 
         print(self.connection_info)
-
         return self.connection_info
 
 
