@@ -5,7 +5,7 @@ from django.shortcuts import render, get_list_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http import JsonResponse
 from django.core.serializers import serialize
-from container import Container as ctn, JupyterInfo, get_ip_address
+from container import Container as ctn, JupyterInfo, get_ip_address, send_mail
 import json
 from .models import Container
 
@@ -26,11 +26,15 @@ def detail(request, container_id) -> HttpResponse:
     1. endpoint: 'dashboard/{container_id}'
     2. function: GET
     """
-    
+
+    # 해당컨테이너가 담긴 레코드 가져오기
+    db_container = Container.objects.get(ctnId=container_id)
+
+    # 이건 컨테이너 리스트 가져오는 것
     container_all = Container.objects.order_by('id')
-    container = Container.objects.get(ctnId=container_id)
+
     context = {
-        'container': container,
+        'container': db_container,
         'container_list': container_all
     }
     return render(request, 'dashboard/container_detail.html', context)
@@ -71,7 +75,7 @@ def make_container(request) -> HttpResponseRedirect:
     container = ctn(
         request.POST.get("containerName"), port=request.POST.get("containerPort")
     )
-    container_info: Dict = container.info(True)
+    container_info: Dict = container.info()
     jupyter_server = JupyterInfo(container_info)
 
     # DB에 저장할 데이터 세팅
@@ -96,6 +100,9 @@ def make_container(request) -> HttpResponseRedirect:
         clientName=client_name
     )
 
+    # 접속정보 파일로 저장
+    jupyter_server.save_info()
+
     #return JsonResponse(response)
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -107,10 +114,10 @@ def del_container(request) -> HttpResponseRedirect:
     function: POST
     """
     # 제거에 필요한 변수 미리선언
-    ctn_id: str = request.POST.get("containerId")
+    ctn_name: str = request.POST.get("containerName")
 
     # 해당 컨테이너에 대해 DB검색
-    db_container = Container.objects.get(ctnId=ctn_id)
+    db_container = Container.objects.get(name=ctn_name)
 
     # 컨테이너 연결
     container = ctn(db_container)
@@ -128,19 +135,49 @@ def power_container(request) -> HttpResponseRedirect:
     endpoint: 'dashboard/power/'
     function: POST
     """
-    print(request.POST)
 
-    # 상대관리에 필요한 변수 미리선언
-    ctn_id: str = request.POST.get("containerId")
+    # 상태관리에 필요한 변수 미리선언
+    ctn_name: str = request.POST.get("containerName")
 
     # 해당 컨테이너에 대해 DB검색
-    #db_container = Container.objects.get(ctnId=ctn_id)
+    db_container = Container.objects.get(name=ctn_name)
 
     # 컨테이너 연결
-    #container = ctn(db_container)
+    container = ctn(db_container)
+    container_info: Dict = container.info()
 
     # 받아온 HTTP.POST값에 따라서 컨테이너 상태조정
+    # 컨테이너를 OFF 할 경우
     if request.POST.get("containerHealth") == 'True':
-        pass
+        container.stop()
+        db_container.health = False
+        db_container.jupyterToken = "None"
+        db_container.save()
+    # 컨테이너를 ON 할 경우
     else:
-        pass
+        container.start()
+        jupyter_server = JupyterInfo(container_info)
+        db_container.health = True
+        db_container.jupyterToken = jupyter_server.info()['token']
+        db_container.save()
+
+        # 접속정보 파일로 저장
+        jupyter_server.save_info()
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+@csrf_exempt
+def email(request) -> HttpResponseRedirect:
+    """
+    ### container 접속 관련 메일 보내는 함수
+    endpoint: 'dashboard/email/'
+    function: POST
+    """
+
+    # 필요한 변수 미리선언
+    ctn_name: str = request.POST.get("containerName")
+
+    # 현재 컨테이너 접속 방법에 대한 이메일 전송
+    send_mail(ctn_name)
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
