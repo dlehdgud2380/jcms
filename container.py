@@ -7,7 +7,7 @@ import socket
 import subprocess
 import re
 import threading
-import datetime
+from datetime import date
 import json
 
 # 타입힌트를 위한 import
@@ -37,12 +37,17 @@ def command(command: str) -> str:
     return result.decode()
 
 # 이메일 컨테이너 확인하는 함수
+
+
 def check_email_container() -> None:
     pass
 
 # 도커가 사용가능한지 확인하는 함수
+
+
 def check_docker_status() -> None:
     pass
+
 
 print("[Module Environment Checking]")
 
@@ -73,7 +78,7 @@ class Container:
     def __init__(self, container_name: str, port: str = 8888) -> None:
         self.container_id: str = None  # 컨테이너 id
         self.container_name: str = None  # 컨테이너 이름
-        self.host_port: int = None 
+        self.host_port: int = None
         self.con_port: int = None
         # 해당이름의 컨테이너가 이미 생성되어있는 지 확인
         self.container_name = f'{container_name}'
@@ -87,8 +92,8 @@ class Container:
             self.container_name = f"jupyter_{container_name}"  # 컨테이너 이름 설정
 
             # 포트설정(기본 8888)
-            self.host_port = int(port) # host
-            self.con_port = 8888 # container
+            self.host_port = int(port)  # host
+            self.con_port = 8888  # container
 
             # 컨테이너 생성
             self.init()
@@ -278,7 +283,6 @@ class JupyterInfo:
         print(self.connection_info)
         return self.connection_info
 
-
     def save_info(self) -> None:
         """
         Jupyter 연결에 필요한 정보를 txt파일로 저장하는 함수
@@ -316,49 +320,62 @@ def send_mail(container_name) -> None:
     system(command)  # 해당 컨테이너에 대한 메일 전송
 
 
-class Logger(threading.Thread):
+class Logger():
     """
-    로그 기록 하는 쓰레드 클래스
+    로그 기록 하는 클래스
     """
 
     def __init__(self, container_name: str, display: bool = False) -> None:
-        threading.Thread.__init__(self)
-        self.container_name = "jupyter_" + container_name
-        self.display = display  # 터미널상에 log를 띄울것인지 아닌지
-        print(f"[logger thread start - {display}]")
+        self.container_name: str = container_name
+        self.display: bool = display  # 터미널상에 log를 띄울것인지 아닌지
+        today_date: str = date.today().isoformat() # 오늘 날짜 불러오기
+        self.log_path: str = f"{work_path}/{self.container_name}/{today_date}-log.txt" # 로그 저장 경로
 
-    def run(self) -> None:
+    def record(self) -> None:
         """
         컨테이너 로그 기록 실행하는 함수
-        * 컨테이너 종료되면 같이 종료됨
         """
         option: str = None  # 기록 옵션(터미널에 띄울것인지 아닌지)
         if self.display is True:
             option = "| tee"
         else:
             option = ">"
+        
         system(
-            f"docker logs -f {self.container_name} {option} {work_path}/{self.container_name}/log.txt")
-        print("[logger thread end]")
+            f"docker logs {self.container_name} {option} {self.log_path}")
+
+        print(f"docker logs {self.container_name} {option} {self.log_path}")
+        print(f"{self.container_name} info: Log Saved")
+
+    def load(self) -> str:
+        """
+        log를 읽어서 return하는 함수
+        """
+        f = open(f'{self.log_path}', 'r')
+        log: str = f.read()
+        return log
 
 
 # 테스트용
 if __name__ == "__main__":
     print("------------container make && print info------------")
     jupyter_test1 = Container("test1")
-    con_info = jupyter_test1.info(True)
-    #print("\n\n------------jupyter info------------")
-    #jupyter_info = JupyterInfo(con_info)
-    #jupyter_info.info()
+    con_info = jupyter_test1.info()
+    # print("\n\n------------jupyter info------------")
+    jupyter_info = JupyterInfo(con_info)
+    jupyter_info.info()
     print("\n\n------------print connection_info.txt------------")
     system(f"cat {work_path}/{con_info['conName']}/connection_info.txt")
-    print("\n\n------------print container health------------")
-    print(f"container health: {jupyter_test1.health()}")
-    #print("\n\n------------send mail connection info------------")
-    #send_mail("jupyter_test1")
+    print("\n\n------------print log.txt------------")
+    logger = Logger("jupyter_test1")
+    logger.record()
+    logger.load()
+
+    # print("\n\n------------print container health------------")
+    # print(f"container health: {jupyter_test1.health()}")
+    # print("\n\n------------send mail connection info------------")
+    # send_mail("jupyter_test1")
     # print("\n\n------------logging------------")
     # logger = Logger("test1")
-    # logger.daemon = True
-    # logger.start()
-    # print("\n\n------------delete container------------")
-    # jupyter_test1.remove()
+    print("\n\n------------delete container------------")
+    jupyter_test1.remove()
