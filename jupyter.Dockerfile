@@ -22,5 +22,4 @@ WORKDIR /root
 EXPOSE 8888
 
 # 4. 패키지 설치 후 쥬피터 노트북 실행
-CMD ["/bin/bash"]
 CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--allow-root"]
