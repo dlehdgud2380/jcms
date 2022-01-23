@@ -5,7 +5,7 @@ from django.shortcuts import render, get_list_or_404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http import JsonResponse
 from django.core.serializers import serialize
-from container import Container as ctn, JupyterInfo, get_ip_address, send_mail
+from container import Container as ctn, JupyterInfo, get_ip_address, send_mail, Logger
 import json
 from .models import Container
 
@@ -181,3 +181,28 @@ def email(request) -> HttpResponseRedirect:
     send_mail(ctn_name)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+@csrf_exempt
+def log(request) -> JsonResponse:
+    """
+    ### container 로그 보내주는 함수
+    endpoint: 'dashboard/log/'
+    function: GET
+    """
+
+    print(request.GET.get("ctnName"))
+
+    # 필요한 변수 미리선언
+    ctn_name: str = request.GET.get("ctnName")
+
+    logger = Logger(ctn_name)
+    logger.record()
+    log: str = logger.load()
+
+    
+    response_data: Dict = {
+        "status": "OK",
+        "log": log
+    }
+
+    return JsonResponse(response_data)

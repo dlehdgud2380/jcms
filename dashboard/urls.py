@@ -10,5 +10,6 @@ urlpatterns = [
     path('remove/', views.del_container, name='remove'),
     path('power/', views.power_container, name='power'),
     path('email/', views.email, name='email'),
+    path('log/', views.log, name='log'),
     path('<str:container_id>/', views.detail, name='detail'),
 ]
