@@ -18,7 +18,7 @@ home_path: str = None  # user 홈 폴더
 work_path: str = None  # 작업 경로
 
 
-def get_ip_address() -> None:
+def get_ip_address() -> str:
     """
     HOST_IP 주소 확인하는 함수
     """
