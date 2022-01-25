@@ -6,7 +6,6 @@ import time
 import socket
 import subprocess
 import re
-import threading
 from datetime import date
 import json
 
