@@ -43,8 +43,8 @@ def detail(request, container_id) -> HttpResponse:
 def make_container(request) -> HttpResponseRedirect:
     """
     ### container 만드는 함수
-    endpoint: 'dashboard/make/'
-    function: POST
+    * endpoint: 'dashboard/make/'
+    * function: POST
     """
 
     # DB에 넣을 데이터 정의
@@ -103,7 +103,7 @@ def make_container(request) -> HttpResponseRedirect:
     # 접속정보 파일로 저장
     jupyter_server.save_info()
 
-    #return JsonResponse(response)
+    # return JsonResponse(response)
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 @csrf_exempt
@@ -198,7 +198,6 @@ def log(request) -> JsonResponse:
     logger = Logger(ctn_name)
     logger.record()
     log: str = logger.load()
-
     
     response_data: Dict = {
         "status": "OK",
