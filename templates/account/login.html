@@ -1,0 +1,75 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}">
+<script type="text/javascript" src="{% static 'javascript/jquery-3.6.0.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/bootstrap.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'javascript/axios.min.js' %}"></script>
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <title>JCMS login</title>
+        <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <h1 style="text-align: center;">Jupyter Container Management System</h1>
+        <div class="container my-3">
+            <form method="post" class="post-form" action="{% url 'account:login' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username">사용자ID</label>
+                    <input type="text" class="form-control" name="username" id="username"
+                           value="{{ form.username.value|default_if_none:'' }}">
+                </div>
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input type="password" class="form-control" name="password" id="password"
+                           value="{{ form.password.value|default_if_none:'' }}">
+                </div>
+                <button type="submit" class="btn btn-primary">로그인</button>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#registerModal">사용자 등록</button>
+            </form>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">JCMS 사용자 등록</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" class="post-form" action="/dashboard/make/">
+                            {% csrf_token %}
+                            <div class="form-group" >
+                                <label for="idField">ID</label>
+                                <input type="text" class="form-control" id="userName" name="userName"
+                                    value="{{ form.containerName.value|default_if_none:'' }}" placeholder="등록할 사용자ID 입력">
+                            </div>
+                            <div class="form-group">
+                                <label for="passwordField">비밀번호</label>
+                                <input type="text" class="form-control" id="userPassword" name="userPassword"
+                                    value="{{ form.containerPort.value|default_if_none:'' }}" placeholder="등록할 비밀번호 입력">
+                            </div>
+                            <div class="form-group">
+                                <label for="emailField">이메일</label>
+                                <input type="text" class="form-control" id="userEmail" name="userEmail"
+                                    value="{{ form.clientName.value|default_if_none:'' }}" placeholder="등록할 이메일 입력">
+                            </div>
+                            <div class="form-group">
+                                <label for="containerNameField">컨테이너명</label>
+                                <input type="text" class="form-control" id="containerName" name="containerName"
+                                    value="{{ form.clientName.value|default_if_none:'' }}" placeholder="컨테이너명 입력">
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-primary">생성하기</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
